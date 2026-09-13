@@ -1,0 +1,15 @@
+[
+  {
+    "alert_id": "ALERT-1001",
+    "sid": "202601",
+    "signature": "Suspicious SMB Authentication Activity",
+    "src_ip": "10.0.0.31",
+    "dst_ip": "10.0.0.15",
+    "src_port": 49152,
+    "dst_port": 445,
+    "protocol": "TCP",
+    "severity": 9,
+    "category": "Credential Access",
+    "timestamp": "2026-09-12T16:00:00"
+  }
+]

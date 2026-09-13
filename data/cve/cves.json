@@ -1,0 +1,11 @@
+[
+  {
+    "cve_id": "CVE-DEMO-2026-001",
+    "service": "SMB",
+    "version": "3.1.1",
+    "cvss": 9.1,
+    "severity": "CRITICAL",
+    "description": "Simulated critical vulnerability affecting SMB service.",
+    "exploit_available": true
+  }
+]

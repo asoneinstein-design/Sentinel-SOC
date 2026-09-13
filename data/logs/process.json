@@ -1,0 +1,11 @@
+[
+  {
+    "timestamp": "2026-09-12T15:59:58",
+    "host": "FILE-01",
+    "user": "admin",
+    "process": "suspicious_service.exe",
+    "parent_process": "svchost.exe",
+    "event": "PROCESS_CREATED",
+    "suspicious": true
+  }
+]

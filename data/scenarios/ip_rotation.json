@@ -1,0 +1,12 @@
+{
+  "scenario_id": "SCENARIO-IP-ROTATION",
+  "name": "Attacker IP Rotation",
+  "description": "Attacker changes source IP after the original IP is blocked.",
+  "initial_attacker_ip": "10.0.0.31",
+  "rotated_attacker_ip": "10.0.0.44",
+  "target_host": "FILE-01",
+  "target_ip": "10.0.0.15",
+  "target_port": 445,
+  "failure_class": "IP_ROTATION",
+  "expected_recovery": "QUARANTINE_HOST"
+}

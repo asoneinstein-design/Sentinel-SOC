@@ -1,0 +1,10 @@
+[
+  {
+    "timestamp": "2026-09-12T16:00:01",
+    "src_ip": "10.0.0.31",
+    "dst_ip": "10.0.0.15",
+    "protocol": "TCP",
+    "dst_port": 445,
+    "status": "ACTIVE"
+  }
+]

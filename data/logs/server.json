@@ -1,0 +1,10 @@
+[
+  {
+    "host": "FILE-01",
+    "service": "SMB",
+    "version": "3.1.1",
+    "port": 445,
+    "status": "RUNNING",
+    "critical": true
+  }
+]

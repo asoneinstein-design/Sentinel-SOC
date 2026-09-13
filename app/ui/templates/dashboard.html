@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#05080d">
+    <title>Sentinel SOC — Command Center</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+<div class="shell">
+    <aside class="sidebar" aria-label="Sentinel navigation">
+        <div class="brand">
+            <div class="brand-symbol" aria-hidden="true"><span></span></div>
+            <div>
+                <div class="brand-name">SENTINEL</div>
+                <div class="brand-subtitle">AUTONOMOUS SOC / COMMAND</div>
+            </div>
+        </div>
+
+        <div class="sidebar-heading">CONTROL PLANE</div>
+        <nav class="navigation">
+            <a class="nav-link active" href="#incident-console">
+                <span class="nav-symbol">◈</span>
+                <span>Incident console</span>
+                <span id="incident-count" class="nav-count">0</span>
+            </a>
+            <a class="nav-link" href="#agent-trace">
+                <span class="nav-symbol">↯</span>
+                <span>Agent trace</span>
+            </a>
+            <a class="nav-link" href="#response-control">
+                <span class="nav-symbol">⌁</span>
+                <span>Response control</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-heading queue-heading">INCIDENT QUEUE</div>
+        <div id="incident-list" class="incident-selector" aria-live="polite">
+            <div class="side-loading">Loading incidents…</div>
+        </div>
+
+        <div class="sidebar-footer">
+            <div class="system-status">
+                <div class="system-status-row">
+                    <span class="online-indicator"></span>
+                    <span>SYSTEM ONLINE</span>
+                    <span class="system-status-sub">LOCAL / SANDBOX</span>
+                </div>
+                <div class="sidebar-provider">AGENT FABRIC <strong>READY</strong></div>
+            </div>
+            <div class="sidebar-version">SENTINEL SOC v1.0 · COMMAND CONSOLE</div>
+        </div>
+    </aside>
+
+    <main class="main" id="incident-console">
+        <header class="topbar">
+            <div>
+                <div class="breadcrumb"><span>SENTINEL</span><b>/</b><strong>INCIDENT RESPONSE</strong></div>
+                <div class="console-label">EVIDENCE-GROUNDED AUTONOMOUS SECURITY OPERATIONS</div>
+            </div>
+            <div class="top-actions">
+                <div id="agent-provider" class="agent-provider"><span class="provider-dot"></span>AGENT <strong>—</strong></div>
+                <div class="clock" id="clock">--:--:--</div>
+                <button class="refresh-btn" type="button" onclick="refreshDashboard()" title="Refresh incident">
+                    <span class="refresh-glyph">↻</span>
+                    <span>Refresh</span>
+                </button>
+            </div>
+        </header>
+
+        <section class="incident-hero">
+            <div class="hero-main">
+                <div class="critical-row">
+                    <span class="critical-badge"><i></i>ACTIVE INVESTIGATION</span>
+                    <span class="incident-category">SMB / INTERNAL HOST</span>
+                </div>
+                <div class="incident-heading">
+                    <div class="hero-overline">CURRENT INCIDENT</div>
+                    <h1 id="incident-title">Loading incident…</h1>
+                    <p id="incident-goal">Waiting for incident data…</p>
+                </div>
+                <div class="identity-row">
+                    <div class="identity">
+                        <span>INCIDENT ID</span>
+                        <strong id="incident-id" class="mono">—</strong>
+                    </div>
+                    <div class="identity">
+                        <span>ALERT ID</span>
+                        <strong id="alert-id" class="mono">—</strong>
+                    </div>
+                    <div class="identity">
+                        <span>TARGET HOST</span>
+                        <strong id="incident-host">—</strong>
+                    </div>
+                    <div class="identity">
+                        <span>ASSET IP</span>
+                        <strong id="incident-ip" class="mono">—</strong>
+                    </div>
+                </div>
+            </div>
+            <div class="incident-resolution">
+                <div class="resolution-label">FINAL STATE</div>
+                <div id="incident-status" class="resolution-status active">UNKNOWN</div>
+                <div id="resolution-sub" class="resolution-sub">Awaiting verification</div>
+            </div>
+        </section>
+
+        <section class="metric-row" aria-label="Incident metrics">
+            <div class="metric">
+                <div class="metric-label">EVIDENCE</div>
+                <div id="evidence-count" class="metric-main">0</div>
+                <div class="metric-detail">correlated sources</div>
+            </div>
+            <div class="metric">
+                <div class="metric-label">ACTIONS</div>
+                <div id="action-count" class="metric-main">0</div>
+                <div class="metric-detail">containment attempts</div>
+            </div>
+            <div class="metric">
+                <div class="metric-label">VERIFICATIONS</div>
+                <div id="verification-count" class="metric-main">0</div>
+                <div class="metric-detail">deterministic checks</div>
+            </div>
+            <div class="metric">
+                <div class="metric-label">CONFIDENCE</div>
+                <div id="confidence" class="metric-main">—</div>
+                <div id="confidence-detail" class="metric-detail">evidence strength</div>
+            </div>
+            <div class="metric outcome-metric">
+                <div class="metric-label">OUTCOME</div>
+                <div id="metric-outcome" class="metric-main">PENDING</div>
+                <div id="metric-outcome-detail" class="metric-detail">awaiting verified response</div>
+            </div>
+        </section>
+
+        <section class="panel attack-panel">
+            <div class="panel-heading">
+                <div>
+                    <div class="eyebrow">ATTACK PATH</div>
+                    <h2>Threat correlation chain</h2>
+                </div>
+                <div id="threat-state" class="panel-tag">TRACKING</div>
+            </div>
+            <div id="threat-path" class="attack-graph"></div>
+        </section>
+
+        <section class="command-grid">
+            <div class="panel">
+                <div class="panel-heading">
+                    <div>
+                        <div class="eyebrow">INVESTIGATION</div>
+                        <h2>Evidence ledger</h2>
+                    </div>
+                    <div id="evidence-state" class="panel-tag">0 SOURCES</div>
+                </div>
+                <div id="evidence-list" class="evidence-list">
+                    <div class="empty-state">No evidence collected.</div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-heading">
+                    <div>
+                        <div class="eyebrow">REASONING</div>
+                        <h2>Current hypothesis</h2>
+                    </div>
+                    <div id="hypothesis-state" class="panel-tag">FORMING</div>
+                </div>
+                <div id="hypothesis" class="hypothesis">
+                    <div class="empty-state">Waiting for agent evidence.</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="panel" id="response-control">
+            <div class="panel-heading">
+                <div>
+                    <div class="eyebrow">RESPONSE CONTROL</div>
+                    <h2>Policy-controlled containment</h2>
+                </div>
+                <div class="panel-right-meta"><span class="shield-mark">◆</span> SANDBOXED TOOLS</div>
+            </div>
+            <div class="operation-grid">
+                <div class="operation-card danger-card">
+                    <div class="operation-icon">⊘</div>
+                    <div class="operation-copy">
+                        <div class="operation-name">Firewall block</div>
+                        <div class="operation-description">Block the malicious source IP in the simulated perimeter.</div>
+                        <div class="operation-inline">
+                            <label for="firewall-target-input">SOURCE</label>
+                            <input id="firewall-target-input" value="10.0.0.31" autocomplete="off" spellcheck="false">
+                        </div>
+                    </div>
+                    <button class="operation-btn danger" type="button" onclick="runOperationFromUI('firewall_block', 'firewall-target-input', this)">BLOCK SOURCE</button>
+                </div>
+
+                <div class="operation-card warning-card">
+                    <div class="operation-icon">◉</div>
+                    <div class="operation-copy">
+                        <div class="operation-name">Host quarantine</div>
+                        <div class="operation-description">Isolate the compromised asset when source containment is insufficient.</div>
+                        <div class="operation-inline">
+                            <label for="quarantine-target-input">HOST</label>
+                            <input id="quarantine-target-input" value="FILE-01" autocomplete="off" spellcheck="false">
+                        </div>
+                    </div>
+                    <button class="operation-btn warning" type="button" onclick="runOperationFromUI('quarantine_host', 'quarantine-target-input', this)">QUARANTINE</button>
+                </div>
+            </div>
+            <div id="operation-note" class="operation-note">Operations execute through the existing FastAPI tool gateway.</div>
+        </section>
+
+        <section class="panel">
+            <div class="panel-heading">
+                <div>
+                    <div class="eyebrow">CONTAINMENT</div>
+                    <h2>Response state</h2>
+                </div>
+                <div id="containment-state" class="panel-tag">MONITORING</div>
+            </div>
+            <div id="containment" class="containment"></div>
+        </section>
+
+        <section class="panel" id="agent-trace">
+            <div class="panel-heading">
+                <div>
+                    <div class="eyebrow">AGENT TRACE</div>
+                    <h2>Decision stream</h2>
+                </div>
+                <div class="panel-right-meta"><span class="pulse"></span> LIVE TRACE</div>
+            </div>
+            <div id="agent-feed" class="agent-feed">
+                <div class="empty-state">Waiting for agent decisions…</div>
+            </div>
+        </section>
+
+        <section class="panel">
+            <div class="panel-heading">
+                <div>
+                    <div class="eyebrow">AUDIT TRAIL</div>
+                    <h2>Investigation timeline</h2>
+                </div>
+                <div class="panel-right-meta">VERIFIED EVENTS</div>
+            </div>
+            <div id="timeline" class="timeline">
+                <div class="empty-state">Loading timeline…</div>
+            </div>
+        </section>
+
+        <section class="command-grid environment-grid">
+            <div class="panel">
+                <div class="panel-heading">
+                    <div>
+                        <div class="eyebrow">NETWORK</div>
+                        <h2>Network state</h2>
+                    </div>
+                </div>
+                <div class="state-list">
+                    <div class="state-item">
+                        <div class="state-left"><span class="state-icon">↔</span><div><span>ACTIVE CONNECTIONS</span><small>live threat-path traffic</small></div></div>
+                        <strong id="network-connections" class="state-badge bad">—</strong>
+                    </div>
+                    <div class="state-item">
+                        <div class="state-left"><span class="state-icon">⊘</span><div><span>FIREWALL</span><small>source enforcement state</small></div></div>
+                        <strong id="firewall-state" class="state-badge bad">OPEN</strong>
+                    </div>
+                    <div class="state-item">
+                        <div class="state-left"><span class="state-icon">◌</span><div><span>BLOCKED SOURCES</span><small>registered containment rules</small></div></div>
+                        <strong id="network-blocked" class="state-badge neutral">—</strong>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-heading">
+                    <div>
+                        <div class="eyebrow">HOST</div>
+                        <h2>Asset state</h2>
+                    </div>
+                </div>
+                <div class="state-list">
+                    <div class="state-item">
+                        <div class="state-left"><span class="state-icon">▣</span><div><span>HOST</span><small>investigated asset</small></div></div>
+                        <strong id="host-name" class="state-badge neutral">—</strong>
+                    </div>
+                    <div class="state-item">
+                        <div class="state-left"><span class="state-icon">◈</span><div><span>ISOLATION</span><small>deterministic verifier</small></div></div>
+                        <strong id="host-isolated" class="state-badge bad">EXPOSED</strong>
+                    </div>
+                    <div class="state-item">
+                        <div class="state-left"><span class="state-icon">✓</span><div><span>VERIFICATION</span><small>final containment check</small></div></div>
+                        <strong id="host-state" class="state-badge bad">PENDING</strong>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="final-panel" id="final-panel">
+            <div id="final-icon" class="final-icon warning">!</div>
+            <div class="final-summary">
+                <div class="eyebrow">FINAL OUTCOME</div>
+                <h2 id="final-title">Containment pending</h2>
+                <p id="final-text">The incident has not yet reached a verified containment state.</p>
+            </div>
+            <div class="final-stats">
+                <div><span>HOST</span><strong id="final-host">EXPOSED</strong></div>
+                <div><span>NETWORK</span><strong id="final-network">ACTIVE</strong></div>
+                <div><span>THREAT PATH</span><strong id="final-threat">ACTIVE</strong></div>
+            </div>
+        </section>
+
+        <footer class="footer">
+            <span>SENTINEL SOC · AUTONOMOUS INVESTIGATION &amp; RESPONSE</span>
+            <span>DETERMINISTIC VERIFICATION ENABLED</span>
+        </footer>
+    </main>
+</div>
+
+<div id="evidence-modal" class="modal-backdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <div class="modal-header">
+            <div>
+                <div class="eyebrow" id="modal-source">EVIDENCE</div>
+                <h3 id="modal-title">Evidence Details</h3>
+            </div>
+            <button class="modal-close" type="button" onclick="closeEvidenceModal()" aria-label="Close">×</button>
+        </div>
+        <div id="evidence-modal-content" class="json-block"></div>
+    </div>
+</div>
+
+<div id="toast-stack" class="toast-stack" aria-live="polite" aria-atomic="true"></div>
+
+<script src="/static/js/dashboard.js"></script>
+</body>
+</html>

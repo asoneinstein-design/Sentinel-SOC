@@ -330,12 +330,26 @@ function renderHypothesis(detail) {
         : "The investigation has not yet accumulated every expected evidence source."
 
     const statement = stored?.statement || stored?.text || derivedStatement;
+
     const confidenceRaw = stored?.confidence ?? (hasAllSources ? 94 : 55);
-    const numericConfidence = typeof confidenceRaw === "number" ? Math.max(0, Math.min(100, confidenceRaw)) : null;
+
+    let numericConfidence = null;
+
+    if (typeof confidenceRaw === "number" && Number.isFinite(confidenceRaw)) {
+        numericConfidence = confidenceRaw <= 1
+            ? Math.round(confidenceRaw * 100)
+            : Math.round(confidenceRaw);
+
+    numericConfidence = Math.max(0, Math.min(100, numericConfidence));
+}
+
     const confidenceLabel = numericConfidence !== null
         ? `${numericConfidence}%`
         : String(confidenceRaw).toUpperCase();
-    const confidenceWidth = numericConfidence !== null ? numericConfidence : (String(confidenceRaw).toUpperCase() === "HIGH" ? 94 : 55);
+
+    const confidenceWidth = numericConfidence !== null
+        ? numericConfidence
+        : (String(confidenceRaw).toUpperCase() === "HIGH" ? 94 : 55);
 
     setText("hypothesis-state", String(stored?.status || (hasAllSources ? "HIGH CONFIDENCE" : "FORMING")).toUpperCase());
 

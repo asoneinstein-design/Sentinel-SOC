@@ -4,3 +4,4 @@ pydantic
 pydantic-settings
 python-dotenv
 httpx
+SQLAlchemy>=2.0,<3.0

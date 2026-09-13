@@ -186,10 +186,28 @@ function renderMetrics(dashboard, detail) {
     const confidence = metrics.confidence ?? (evidence.length >= 4 ? "HIGH" : evidence.length >= 2 ? "MEDIUM" : "FORMING");
     const confidenceNode = document.getElementById("confidence");
     if (confidenceNode) {
-        confidenceNode.textContent = typeof confidence === "number" ? `${confidence}%` : String(confidence).toUpperCase();
-        confidenceNode.className = `metric-main ${statusTone(confidence).replace("warn", "warn")}`;
+        let displayConfidence = confidence;
+
+        if (typeof confidence === "number" && Number.isFinite(confidence)) {
+            // Support both normalized values (0.94) and percentage values (94).
+            displayConfidence = confidence <= 1
+                ? Math.round(confidence * 100)
+                : Math.round(confidence);
+        }
+
+        confidenceNode.textContent =
+            typeof displayConfidence === "number"
+                ? `${displayConfidence}%`
+                : String(displayConfidence).toUpperCase();
+
+        confidenceNode.className = `metric-main ${statusTone(displayConfidence)}`;
     }
-    setText("confidence-detail", typeof confidence === "number" ? "stored dashboard metric" : "evidence strength");
+    setText(
+        "confidence-detail",
+        typeof confidence === "number"
+            ? "stored reasoning confidence"
+            : "evidence strength"
+    );
 
     const outcome = detail?.incident?.status || "PENDING";
     const outcomeNode = document.getElementById("metric-outcome");
@@ -321,17 +339,58 @@ function renderHypothesis(detail) {
 
     setText("hypothesis-state", String(stored?.status || (hasAllSources ? "HIGH CONFIDENCE" : "FORMING")).toUpperCase());
 
-    const supporting = stored?.supporting_evidence_ids || stored?.supportingEvidenceIds || [];
-    const chips = supporting.length
-        ? supporting.slice(0, 6).map(id => `<span class="hypothesis-chip">${escapeHTML(id)}</span>`).join("")
-        : ["NIDS", "SERVER LOGS", "CVE", "NETWORK"].filter(source => evidence.some(item => item.source === source)).map(source => `<span class="hypothesis-chip">${source}</span>`).join("");
+    let supportingRaw =
+        stored?.supporting_evidence_ids ??
+        stored?.supportingEvidenceIds ??
+        stored?.supporting_evidence_ids_json ??
+        [];
+
+    let supportingIds = [];
+
+    if (Array.isArray(supportingRaw)) {
+        supportingIds = supportingRaw;
+    } else if (typeof supportingRaw === "string") {
+        try {
+            const parsed = JSON.parse(supportingRaw);
+            supportingIds = Array.isArray(parsed) ? parsed : [];
+        } catch (_) {
+            supportingIds = [];
+        }
+    }
+
+    let supportingSources = supportingIds.map(id => {
+        const matchedEvidence = evidence.find(
+            item => String(item?.id) === String(id)
+        );
+        return matchedEvidence ? humanSource(matchedEvidence.source) : String(id);
+    });
+
+    // If the API does not expose evidence IDs, fall back to the actual
+    // evidence records already returned for this incident.
+    if (!supportingSources.length) {
+        supportingSources = ["nids", "server_logs", "cve", "network"]
+            .filter(source => evidence.some(item => item.source === source))
+            .map(humanSource);
+    }
+
+    supportingSources = [...new Set(supportingSources)];
+
+    const chips = supportingSources.length
+        ? supportingSources
+            .slice(0, 6)
+            .map(source => `<span class="hypothesis-chip">${escapeHTML(source)}</span>`)
+            .join("")
+        : `<span class="hypothesis-chip">NO SUPPORTING EVIDENCE RECORDED</span>`;
 
     container.innerHTML = `
         <div class="hypothesis-title">${escapeHTML(statement)}</div>
         <div class="hypothesis-text">${escapeHTML(stored?.reason || stored?.description || (stored ? "Stored by the incident reasoning layer." : derivedText))}</div>
         <div class="hypothesis-meta"><span>CONFIDENCE</span><strong>${escapeHTML(confidenceLabel)}</strong></div>
         <div class="confidence-bar"><div class="confidence-fill" style="width:${confidenceWidth}%"></div></div>
-        <div class="hypothesis-evidence">${chips || "<span class=\"hypothesis-chip\">NO SUPPORTING EVIDENCE RECORDED</span>"}</div>
+        <div class="hypothesis-evidence">
+            <div class="hypothesis-evidence-label">SUPPORTING EVIDENCE</div>
+            <div class="hypothesis-chip-row">${chips}</div>
+        </div>
         ${stored ? "" : `<div class="derived-note">Derived presentation only — no stored hypothesis object was exposed by this response.</div>`}
     `;
 }
